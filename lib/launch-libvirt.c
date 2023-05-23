@@ -1,5 +1,5 @@
 /* libguestfs
- * Copyright (C) 2009-2023 Red Hat Inc.
+ * Copyright (C) 2009-2020 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -71,7 +71,7 @@
 #endif
 /* End of fixes for Mac OS X */
 
-#ifdef HAVE_LIBVIRT
+#ifdef HAVE_LIBVIRT_BACKEND
 
 #ifndef HAVE_XMLBUFFERDETACH
 /* Added in libxml2 2.8.0.  This is mostly a copy of the function from
@@ -352,7 +352,17 @@ launch_libvirt (guestfs_h *g, void *datav, const char *libvirt_uri)
          data->libvirt_version.v_major,
          data->libvirt_version.v_minor,
          data->libvirt_version.v_micro);
+  if (!guestfs_int_version_ge (&data->libvirt_version,
+                               MIN_LIBVIRT_MAJOR, MIN_LIBVIRT_MINOR,
+                               MIN_LIBVIRT_MICRO)) {
+    error (g, _("you must have libvirt >= %d.%d.%d "
+                "to use the ‘libvirt’ backend"),
+           MIN_LIBVIRT_MAJOR, MIN_LIBVIRT_MINOR, MIN_LIBVIRT_MICRO);
+    return -1;
+  }
+
   guestfs_int_launch_send_progress (g, 0);
+  TRACE0 (launch_libvirt_start);
 
   /* Create a random name for the guest. */
   memcpy (data->name, "guestfs-", 8);
@@ -471,6 +481,8 @@ launch_libvirt (guestfs_h *g, void *datav, const char *libvirt_uri)
   guestfs_pop_error_handler (g);
 
   /* Locate and/or build the appliance. */
+  TRACE0 (launch_build_libvirt_appliance_start);
+
   debug (g, "build appliance");
 
   if (guestfs_int_build_appliance (g, &params.kernel, &params.initrd,
@@ -478,6 +490,7 @@ launch_libvirt (guestfs_h *g, void *datav, const char *libvirt_uri)
     goto cleanup;
 
   guestfs_int_launch_send_progress (g, 3);
+  TRACE0 (launch_build_libvirt_appliance_end);
 
   /* Note that appliance can be NULL if using the old-style appliance. */
   if (params.appliance) {
@@ -489,6 +502,8 @@ launch_libvirt (guestfs_h *g, void *datav, const char *libvirt_uri)
     if (!params.appliance_overlay)
       goto cleanup;
   }
+
+  TRACE0 (launch_build_libvirt_qcow2_overlay_end);
 
   /* Using virtio-serial, we need to create a local Unix domain socket
    * for qemu to connect to.
@@ -701,6 +716,8 @@ launch_libvirt (guestfs_h *g, void *datav, const char *libvirt_uri)
 
   if (params.appliance)
     guestfs_int_add_dummy_appliance_drive (g);
+
+  TRACE0 (launch_libvirt_end);
 
   guestfs_int_launch_send_progress (g, 12);
 
@@ -1454,6 +1471,12 @@ construct_libvirt_xml_disk (guestfs_h *g,
   CLEANUP_FREE char *format = NULL;
   const char *type, *uuid;
   int r;
+
+  /* XXX We probably could support this if we thought about it some more. */
+  if (drv->iface) {
+    error (g, _("‘iface’ parameter is not supported by the libvirt backend"));
+    return -1;
+  }
 
   start_element ("disk") {
     attribute ("device", "disk");
@@ -2296,4 +2319,4 @@ guestfs_int_init_libvirt_backend (void)
   guestfs_int_register_backend ("libvirt", &backend_libvirt_ops);
 }
 
-#endif /* HAVE_LIBVIRT */
+#endif /* HAVE_LIBVIRT_BACKEND */

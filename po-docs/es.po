@@ -603,7 +603,7 @@ msgstr ""
 #: ../inspector/virt-inspector.pod:90 ../rescue/virt-rescue.pod:127
 #: ../sysprep/virt-sysprep.pod:81
 msgid "B<-d> guest"
-msgstr "B<-d> invitado"
+msgstr ""
 
 #. type: =item
 #: ../align/virt-alignment-scan.pod:138 ../cat/virt-cat.pod:90
@@ -614,7 +614,7 @@ msgstr "B<-d> invitado"
 #: ../inspector/virt-inspector.pod:92 ../rescue/virt-rescue.pod:129
 #: ../sysprep/virt-sysprep.pod:83
 msgid "B<--domain> guest"
-msgstr "B<--domain> invitado"
+msgstr ""
 
 #. type: textblock
 #: ../align/virt-alignment-scan.pod:140 ../cat/virt-cat.pod:92
@@ -628,8 +628,6 @@ msgid ""
 "Add all the disks from the named libvirt guest.  Domain UUIDs can be used "
 "instead of names."
 msgstr ""
-"Añadir todos los discos desde el invitado libvirt denominado. Se pueden usar "
-"UUIDs de dominio en lugar de nombres."
 
 #. type: =item
 #: ../align/virt-alignment-scan.pod:143 ../cat/virt-cat.pod:102
@@ -640,7 +638,7 @@ msgstr ""
 #: ../fuse/guestmount.pod:221 ../inspector/virt-inspector.pod:104
 #: ../rescue/virt-rescue.pod:157
 msgid "B<--format=raw|qcow2|..>"
-msgstr "B<--format=raw|qcow2|..>"
+msgstr ""
 
 #. type: =item
 #: ../align/virt-alignment-scan.pod:145 ../cat/virt-cat.pod:104
@@ -651,7 +649,7 @@ msgstr "B<--format=raw|qcow2|..>"
 #: ../fuse/guestmount.pod:223 ../inspector/virt-inspector.pod:106
 #: ../rescue/virt-rescue.pod:159
 msgid "B<--format>"
-msgstr "B<--format>"
+msgstr ""
 
 #. type: textblock
 #: ../align/virt-alignment-scan.pod:147 ../cat/virt-cat.pod:106
@@ -666,10 +664,6 @@ msgid ""
 "the command line.  Using I<--format> with no argument switches back to auto-"
 "detection for subsequent I<-a> options."
 msgstr ""
-"Lo predeterminado para la opción I<-a> es auto-detectar el formato del disco "
-"imagen. Usando esto fuerza el formato de disco para las opciones I<-a> que "
-"siguen en la línea de comandos. Usando I<--format> sin argumento conmuta a "
-"la auto-detección atrás para las subsiguientes opciones I<-a>."
 
 #. type: textblock
 #: ../align/virt-alignment-scan.pod:152 ../builder/virt-builder.pod:150
@@ -693,8 +687,6 @@ msgid ""
 " virt-alignment-scan --format=raw -a disk.img\n"
 "\n"
 msgstr ""
-" virt-alignment-scan --format=raw -a disk.img\n"
-"\n"
 
 #. type: textblock
 #: ../align/virt-alignment-scan.pod:156 ../cat/virt-cat.pod:115

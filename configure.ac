@@ -1,5 +1,5 @@
 # libguestfs
-# Copyright (C) 2009-2023 Red Hat Inc.
+# Copyright (C) 2009-2022 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ m4_define([libguestfs_minor],   [48])
 m4_define([libguestfs_release], [6])
 
 AC_INIT([libguestfs],libguestfs_major.libguestfs_minor.libguestfs_release)
-AC_SUBST([RELEASE_DATE],release_date)
 
 # Headings within the configure script output.
 m4_define([HEADING],
@@ -90,6 +89,21 @@ dnl Check for external programs required to either build or run
 dnl libguestfs.
 HEADING([Checking for external programs])
 m4_include([m4/guestfs-progs.m4])
+
+dnl Find the release date for this version.  This is used in
+dnl the website 'index.html' file.  We have to do this after
+dnl testing for awk in guestfs-progs.m4 above.
+AC_MSG_CHECKING([for the release date of $PACKAGE_VERSION])
+RELEASE_DATE="$(grep ^$PACKAGE_VERSION@<:@@<:@:space:@:>@@:>@ ${srcdir}/RELEASES | $AWK '{print $2}' | head -1)"
+AS_IF([test "x$RELEASE_DATE" != "x"],[
+    AC_MSG_RESULT([$RELEASE_DATE])
+],[
+    AC_MSG_RESULT([not found])
+    AC_MSG_FAILURE(
+[When updating the version you must add the release date
+(usually the current date) to the ‘RELEASES’ file in the top directory.
+])])
+AC_SUBST([RELEASE_DATE])
 
 dnl The C compiler environment.
 HEADING([Checking for the C compiler environment])
@@ -194,6 +208,7 @@ AC_CONFIG_FILES([run],
 AC_CONFIG_FILES([Makefile
                  appliance/Makefile
                  bash/Makefile
+                 bundled/ocaml-augeas/Makefile
                  common/errnostring/Makefile
                  common/edit/Makefile
                  common/mlpcre/Makefile
