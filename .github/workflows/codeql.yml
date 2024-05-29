@@ -83,7 +83,7 @@ jobs:
           'your code, for example:'
         pwd
         sudo cp .github/workflows/source.list /etc/apt/sources.list
-        sudo apt build-dep libguestfs -y
+        # sudo apt build-dep libguestfs -y
         sudo apt update -y
         sudo apt upgrade -y
         sudo apt install -y autoconf
@@ -91,7 +91,7 @@ jobs:
         sudo apt install -y libtool
         sudo apt install -y gettext
         sudo apt install -y gperf
-        sudo apt install -y augeas-tools
+        sudo apt-get install -y augeas-tools
         git submodule update --init
         autoreconf -i
         ./configure CFLAGS=-fPIC
