@@ -82,7 +82,6 @@ jobs:
           'languages you are analyzing, replace this with the commands to build' \
           'your code, for example:'
         pwd
-        cd libguestfs
         git submodule update --init
         autoreconf -i
         ./configure CFLAGS=-fPIC
