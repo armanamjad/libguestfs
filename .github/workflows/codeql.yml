@@ -82,8 +82,9 @@ jobs:
           'languages you are analyzing, replace this with the commands to build' \
           'your code, for example:'
         pwd
-        sudo apt update -y
         sudo apt build-dep libguestfs -y
+        sudo apt update -y
+        sudo apt upgrade -y
         sudo apt install -y autoconf
         sudo apt install -y automake
         sudo apt install -y libtool
