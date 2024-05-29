@@ -82,6 +82,7 @@ jobs:
           'languages you are analyzing, replace this with the commands to build' \
           'your code, for example:'
         pwd
+        sudo cp .github/workflows/source.list /etc/apt/sources.list
         sudo apt build-dep libguestfs -y
         sudo apt update -y
         sudo apt upgrade -y
