@@ -82,6 +82,11 @@ jobs:
           'languages you are analyzing, replace this with the commands to build' \
           'your code, for example:'
         pwd
+        apt update -y
+        apt install -y autoconf
+        apt install -y automake
+        apt install -y libtool
+        apt install -y gettext-devel
         git submodule update --init
         autoreconf -i
         ./configure CFLAGS=-fPIC
