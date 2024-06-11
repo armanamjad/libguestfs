@@ -1,5 +1,5 @@
 # libguestfs
-# Copyright (C) 2009-2023 Red Hat Inc.
+# Copyright (C) 2009-2020 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ SUBDIRS += include lib docs examples
 
 # The daemon and the appliance.
 SUBDIRS += common/mlutils
+SUBDIRS += bundled/ocaml-augeas
 SUBDIRS += common/mlpcre
 if ENABLE_DAEMON
 SUBDIRS += daemon
@@ -115,7 +116,7 @@ SUBDIRS += po-docs
 endif
 
 EXTRA_DIST = \
-	AUTHORS HACKING TODO \
+	AUTHORS HACKING RELEASES TODO \
 	.gitignore \
 	.gitpublish \
 	.lvimrc \
@@ -214,7 +215,7 @@ dist-hook: docs/C_SOURCE_FILES po/POTFILES
 docs/C_SOURCE_FILES: configure.ac
 	rm -f $@ $@-t
 	find $(DIST_SUBDIRS) -name '*.[ch]' | \
-	grep -v -E '^(builder/index-parse\.|builder/index-scan\.|examples/|gobject/|java/com_redhat_et_libguestfs|perl/|php/extension/config\.h|ruby/ext/guestfs/extconf\.h|tests/|test-data/)' | \
+	grep -v -E '^(builder/index-parse\.|builder/index-scan\.|examples/|gobject/|java/com_redhat_et_libguestfs|perl/|php/extension/config\.h|ruby/ext/guestfs/extconf\.h|tests/|test-data/|bundled/)' | \
 	grep -v -E '/(guestfs|rc)_protocol\.' | \
 	grep -v -E '.*/errnostring\.' | \
 	grep -v -E '.*-gperf\.' | \
@@ -227,7 +228,7 @@ po/POTFILES: configure.ac
 	rm -f $@ $@-t
 	cd $(srcdir); \
 	find $(DIST_SUBDIRS) -name '*.c' | \
-	grep -v -E '^(examples|perl/(blib|examples)|po-docs|tests|test-data)/' | \
+	grep -v -E '^(examples|perl/(blib|examples)|po-docs|tests|test-data|bundled)/' | \
 	grep -v -E '/((guestfs|rc)_protocol\.c|dummy\.c)$$' | \
 	grep -v -E '^python/utils\.c$$' | \
 	grep -v -E '^perl/lib/Sys/Guestfs\.c$$' | \

@@ -1,5 +1,5 @@
 /* libguestfs
- * Copyright (C) 2009-2023 Red Hat Inc.
+ * Copyright (C) 2009-2020 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -81,6 +81,7 @@ guestfs_impl_launch (guestfs_h *g)
 
   /* Start the clock ... */
   gettimeofday (&g->launch_t, NULL);
+  TRACE0 (launch_start);
 
   /* Make the temporary directory. */
   if (guestfs_int_lazy_make_tmpdir (g) == -1)
@@ -425,7 +426,7 @@ guestfs_int_passt_runnable (guestfs_h *g)
 void *
 guestfs_int_force_load_backends[] = {
   guestfs_int_init_direct_backend,
-#ifdef HAVE_LIBVIRT
+#ifdef HAVE_LIBVIRT_BACKEND
   guestfs_int_init_libvirt_backend,
 #endif
 };

@@ -1,5 +1,5 @@
 # libguestfs
-# Copyright (C) 2009-2023 Red Hat Inc.
+# Copyright (C) 2009-2020 Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,14 +41,13 @@ dnl Headers.
 AC_CHECK_HEADERS([\
     byteswap.h \
     endian.h \
-    error.h \
+    sys/endian.h \
     errno.h \
     linux/fs.h \
     linux/magic.h \
     linux/raid/md_u.h \
     linux/rtc.h \
     printf.h \
-    sys/endian.h \
     sys/inotify.h \
     sys/mount.h \
     sys/resource.h \
@@ -65,12 +64,9 @@ AC_CHECK_HEADERS([\
 
 dnl Functions.
 AC_CHECK_FUNCS([\
-    accept4 \
     be32toh \
-    error \
     fsync \
     futimens \
-    getprogname \
     getxattr \
     htonl \
     htons \
@@ -83,7 +79,6 @@ AC_CHECK_FUNCS([\
     mknod \
     ntohl \
     ntohs \
-    pipe2 \
     posix_fallocate \
     posix_fadvise \
     removexattr \
@@ -204,13 +199,6 @@ PKG_CHECK_MODULES([RPC], [libtirpc], [], [
     AC_SUBST([RPC_LIBS])
 ])
 
-dnl Unsigned 64 bit ints are not available on macOS, but
-dnl the signed functions can be used instead.
-old_LIBS="$LIBS"
-LIBS="$LIBS $RPC_LIBS"
-AC_CHECK_FUNCS([xdr_uint64_t])
-LIBS="$old_LIBS"
-
 AC_CHECK_PROG([RPCGEN],[rpcgen],[rpcgen],[no])
 AM_CONDITIONAL([HAVE_RPCGEN],[test "x$RPCGEN" != "xno"])
 
@@ -229,6 +217,21 @@ if test "x$have_libselinux" = "xyes"; then
     AC_DEFINE([HAVE_LIBSELINUX],[1],[Define to 1 if you have libselinux.])
 fi
 AC_SUBST([SELINUX_LIBS])
+
+dnl Check for systemtap/DTrace userspace probes (optional).
+dnl Since the probe points break under clang, allow this to be disabled.
+AC_ARG_ENABLE([probes],
+    AS_HELP_STRING([--disable-probes], [disable systemtap/DTrace userspace probes]),
+    [],
+    [enable_probes=yes])
+AS_IF([test "x$enable_probes" != "xno"],[
+    dnl http://sourceware.org/systemtap/wiki/AddingUserSpaceProbingToApps
+    AC_CHECK_HEADERS([sys/sdt.h])
+    dnl AC_CHECK_PROG([DTRACE],[dtrace],[dtrace],[no])
+    AS_IF([test "x$ac_cv_header_sys_sdt_h" = "xyes"],[
+        AC_DEFINE([ENABLE_PROBES],[1],[Enable systemtap/DTrace userspace probes.])
+    ])
+])
 
 dnl Enable packet dumps when in verbose mode.  This generates lots
 dnl of debug info, only useful for people debugging the RPC mechanism.

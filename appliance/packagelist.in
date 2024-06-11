@@ -24,7 +24,6 @@ dnl Basically the same with a few minor tweaks.
 ifelse(UBUNTU,1,`define(`DEBIAN',1)')
 
 ifelse(REDHAT,1,
-  clevis-luks
   cryptsetup
   cryptsetup-luks      dnl old name used before Fedora 17
   dhclient
@@ -58,7 +57,6 @@ ifelse(DEBIAN,1,
   bsdmainutils
 dnl old name used in Jessie and earlier
   btrfs-tools
-  clevis-luks
   cryptsetup
   dash
   extlinux
@@ -99,7 +97,6 @@ dnl iproute has been renamed to iproute2
 ifelse(ARCHLINUX,1,
   cdrkit
   cdrtools
-  clevis
   cryptsetup
   dhclient
   dhcpcd
@@ -112,6 +109,7 @@ ifelse(ARCHLINUX,1,
   dnl syslinux has mtools as optional dependency, but in reality it's
   dnl a hard one:
   mtools
+  multipath-tools  dnl for kpartx
   nilfs-utils
   ntfs-3g
   ntfs-3g-system-compression
@@ -127,7 +125,6 @@ ifelse(SUSE,1,
   augeas-lenses
   btrfsprogs
   cdrkit-cdrtools-compat
-  clevis
   cryptsetup
   dhcpcd
   dhcp-client
@@ -289,6 +286,35 @@ util-linux
 util-linux-ng
 xfsprogs
 zerofree
+
+dnl tools needed by virt-dib
+ifelse(REDHAT,1,
+  qemu-img
+  which
+)
+ifelse(DEBIAN,1,
+  qemu-utils
+)
+ifelse(ARCHLINUX,1,
+  qemu
+  which
+)
+ifelse(SUSE,1,
+  qemu-tools
+  which
+)
+ifelse(FRUGALWARE,1,
+  qemu
+  which
+)
+ifelse(MAGEIA,1,
+  qemu-img
+  which
+)
+curl
+kpartx
+dnl (virt-dib) tools optionally used for elements
+debootstrap
 
 dnl exFAT is not usually available in free software repos
 exfat-fuse
