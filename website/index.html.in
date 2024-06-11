@@ -54,7 +54,7 @@ guestfish --ro -i -a disk.img
 
 <p>
 Join us on
-the <a href="http://www.redhat.com/mailman/listinfo/libguestfs">libguestfs
+the <a href="https://lists.libguestfs.org">libguestfs
 mailing list</a>, or on IRC channel <code>#guestfs</code>
 on <a href="https://libera.chat/">Libera Chat</a>.
 </p>
@@ -183,13 +183,15 @@ git clone <a href="https://github.com/libguestfs/libguestfs">https://github.com/
 <p class="latest">
 <em><small>
   <!--
-LATEST-URL: http://libguestfs.org/download/1.45-development/libguestfs-@PACKAGE_VERSION@.tar.gz
+LATEST-URL: http://libguestfs.org/download/1.51-development/libguestfs-@PACKAGE_VERSION@.tar.gz
 LATEST-VERSION: @PACKAGE_VERSION@
   -->
-  <a href="download/1.45-development/">Latest development version: <strong>@PACKAGE_VERSION@</strong></a> (released <strong>@RELEASE_DATE@</strong>).<br/>
+  <a href="download/1.51-development/">Latest development version: <strong>@PACKAGE_VERSION@</strong></a> (released <strong>@RELEASE_DATE@</strong>).<br/>
   Stable branch:
   <strong>
-  <a href="download/1.48-stable/">1.48.x</a>,
+  <a href="download/1.52-stable/">1.52.x</a>,
+  <a href="download/1.50-stable/">1.50.x</a>,
+  <a href="download/1.48-stable/">1.48.x</a>
   </strong>
 </small></em>
 </p>

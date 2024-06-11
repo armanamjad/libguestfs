@@ -19,8 +19,9 @@
 # add extra information using --with-extra="..." which may be any
 # freeform string.
 m4_define([libguestfs_major],   [1])
-m4_define([libguestfs_minor],   [48])
-m4_define([libguestfs_release], [6])
+m4_define([libguestfs_minor],   [52])
+m4_define([libguestfs_release], [1])
+m4_define([release_date],       [2024-05-13])
 
 AC_INIT([libguestfs],libguestfs_major.libguestfs_minor.libguestfs_release)
 AC_SUBST([RELEASE_DATE],release_date)
@@ -320,7 +321,7 @@ echo "If any optional component is configured 'no' when you expected 'yes'"
 echo "then you should check the preceding messages."
 echo
 echo "Please report bugs back to the mailing list:"
-echo "http://www.redhat.com/mailman/listinfo/libguestfs"
+echo "https://lists.libguestfs.org"
 echo
 echo "Next you should type 'make' to build the package,"
 echo "then 'make check' to run the tests."

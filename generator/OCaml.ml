@@ -312,9 +312,14 @@ type t
 exception Error of string
 exception Handle_closed of string
 
-external create : ?environment:bool -> ?close_on_exit:bool -> unit -> t =
+external _create : ?environment:bool -> ?close_on_exit:bool -> unit -> t =
   \"guestfs_int_ocaml_create\"
 external close : t -> unit = \"guestfs_int_ocaml_close\"
+
+let create ?environment ?close_on_exit () =
+  let g = _create ?environment ?close_on_exit () in
+  Gc.finalise close g;
+  g
 
 type event =
 ";
@@ -429,6 +434,7 @@ and generate_ocaml_c () =
 #include <caml/memory.h>
 #include <caml/mlvalues.h>
 #include <caml/signals.h>
+#include <caml/threads.h>
 
 #include <guestfs.h>
 #include \"guestfs-utils.h\"
@@ -689,12 +695,12 @@ copy_table (char * const * argv)
       pr "\n";
 
       if blocking then
-        pr "  caml_enter_blocking_section ();\n";
+        pr "  caml_release_runtime_system ();\n";
       pr "  r = %s " c_function;
       generate_c_call_args ~handle:"g" style;
       pr ";\n";
       if blocking then
-        pr "  caml_leave_blocking_section ();\n";
+        pr "  caml_acquire_runtime_system ();\n";
 
       (* Free strings if we copied them above. *)
       List.iter (

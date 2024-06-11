@@ -130,6 +130,7 @@ guestfsd_SOURCES = \
 	fs-min-size.c \
 	fsck.c \
 	fstrim.c \
+	gdisk.c \
 	glob.c \
 	grep.c \
 	grub.c \
@@ -280,6 +281,7 @@ SOURCES_MLI = \
 	devsparts.mli \
 	file.mli \
 	filearch.mli \
+	file_helper.mli \
 	findfs.mli \
 	inspect.mli \
 	inspect_fs.mli \
@@ -321,6 +323,7 @@ SOURCES_ML = \
 	btrfs.ml \
 	cryptsetup.ml \
 	devsparts.ml \
+	file_helper.ml \
 	file.ml \
 	filearch.ml \
 	isoinfo.ml \
@@ -374,9 +377,11 @@ OCAML_LIBS = \
 	-lmlstdutils \
 	-lmlaugeas \
 	-lmlhivex \
-	-lcamlstr \
-	-lunix \
-	-l$(CAMLRUN) -ldl -lm
+	-l$(CAMLSTR) \
+	-l$(CAMLUNIX) \
+	-l$(CAMLRUN) \
+	$(LIBZSTD_LIBS) \
+	-ldl -lm
 
 CLEANFILES += camldaemon.o
 
