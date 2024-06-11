@@ -19,6 +19,7 @@
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 
@@ -34,7 +35,9 @@
 #include <caml/mlvalues.h>
 #include <caml/printexc.h>
 #include <caml/signals.h>
+#include <caml/threads.h>
 #include <caml/unixsupport.h>
+#include <caml/version.h>
 
 #include "guestfs-c.h"
 
@@ -58,41 +61,10 @@ value guestfs_int_ocaml_delete_event_callback (value gv, value eh);
 value guestfs_int_ocaml_event_to_string (value events);
 value guestfs_int_ocaml_last_errno (value gv);
 
-/* Allocate handles and deal with finalization. */
-static void
-guestfs_finalize (value gv)
-{
-  guestfs_h *g = Guestfs_val (gv);
-
-  if (g) {
-    /* There is a nasty, difficult to solve case here where the
-     * user deletes events in one of the callbacks that we are
-     * about to invoke, resulting in a double-free.  XXX
-     */
-    size_t len;
-    value **roots = get_all_event_callbacks (g, &len);
-
-    /* Close the handle: this could invoke callbacks from the list
-     * above, which is why we don't want to delete them before
-     * closing the handle.
-     */
-    guestfs_close (g);
-
-    /* Now unregister the global roots. */
-    if (roots && len > 0) {
-      size_t i;
-      for (i = 0; i < len; ++i) {
-        caml_remove_generational_global_root (roots[i]);
-        free (roots[i]);
-      }
-      free (roots);
-    }
-  }
-}
-
+/* Allocate handles. */
 static struct custom_operations guestfs_custom_operations = {
   (char *) "guestfs_custom_operations",
-  guestfs_finalize,
+  custom_finalize_default,
   custom_compare_default,
   custom_hash_default,
   custom_serialize_default,
@@ -174,11 +146,37 @@ value
 guestfs_int_ocaml_close (value gv)
 {
   CAMLparam1 (gv);
+  guestfs_h *g = Guestfs_val (gv);
 
-  guestfs_finalize (gv);
+  if (g) {
+    /* There is a nasty, difficult to solve case here where the
+     * user deletes events in one of the callbacks that we are
+     * about to invoke, resulting in a double-free.  XXX
+     */
+    size_t len;
+    value **roots = get_all_event_callbacks (g, &len);
 
-  /* So we don't double-free in the finalizer. */
-  Guestfs_val (gv) = NULL;
+    /* So we don't double-free. */
+    Guestfs_val (gv) = NULL;
+
+    /* Close the handle: this could invoke callbacks from the list
+     * above, which is why we don't want to delete them before
+     * closing the handle.
+     */
+    caml_release_runtime_system ();
+    guestfs_close (g);
+    caml_acquire_runtime_system ();
+
+    /* Now unregister the global roots. */
+    if (roots && len > 0) {
+      size_t i;
+      for (i = 0; i < len; ++i) {
+        caml_remove_generational_global_root (roots[i]);
+        free (roots[i]);
+      }
+      free (roots);
+    }
+  }
 
   CAMLreturn (Val_unit);
 }
@@ -394,13 +392,32 @@ event_callback_wrapper (guestfs_h *g,
 {
   /* Ensure we are holding the GC lock before any GC operations are
    * possible. (RHBZ#725824)
+   *
+   * There are many paths where we already hold the OCaml lock before
+   * this function, for example "non-blocking" calls, and the
+   * libguestfs global atexit path (which calls guestfs_close).  To
+   * avoid double acquisition we need to check if we already hold the
+   * lock.  OCaml 5 is strict about this.  In earlier OCaml versions
+   * there is no way to check, but they did not implement the lock as
+   * a mutex and so it didn't cause problems.
+   *
+   * See also:
+   * https://discuss.ocaml.org/t/test-caml-state-and-conditionally-caml-acquire-runtime-system-good-or-bad/12489
    */
-  caml_leave_blocking_section ();
+#if OCAML_VERSION_MAJOR >= 5
+  bool acquired = Caml_state_opt != NULL;
+#else
+  const bool acquired = false;
+#endif
+
+  if (!acquired)
+    caml_acquire_runtime_system ();
 
   event_callback_wrapper_locked (g, data, event, event_handle, flags,
                                  buf, buf_len, array, array_len);
 
-  caml_enter_blocking_section ();
+  if (!acquired)
+    caml_release_runtime_system ();
 }
 
 value

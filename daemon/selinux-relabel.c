@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "guestfs_protocol.h"
 #include "daemon.h"
@@ -38,14 +39,26 @@ optgroup_selinuxrelabel_available (void)
 }
 
 static int
+dir_exists (const char *dir)
+{
+  struct stat statbuf;
+
+  if (stat (dir, &statbuf) == 0 && S_ISDIR (statbuf.st_mode))
+    return 1;
+  else
+    return 0;
+}
+
+static int
 setfiles_has_option (int *flag, char opt_char)
 {
   CLEANUP_FREE char *err = NULL;
 
   if (*flag == -1) {
     char option[] = { '-', opt_char, '\0' };       /* "-X" */
-    char err_opt[] = { '\'', opt_char, '\'', '\0'}; /* "'X'" */
+    char err_opt[32];     /* "invalid option -- 'X'" */
 
+    snprintf(err_opt, sizeof(err_opt), "invalid option -- '%c'", opt_char);
     ignore_value (command (NULL, &err, "setfiles", option, NULL));
     *flag = err && strstr (err, /* "invalid option -- " */ err_opt) == NULL;
   }
@@ -60,6 +73,7 @@ do_selinux_relabel (const char *specfile, const char *path,
 {
   static int flag_m = -1;
   static int flag_C = -1;
+  static int flag_T = -1;
   const char *argv[MAX_ARGS];
   CLEANUP_FREE char *s_dev = NULL, *s_proc = NULL, *s_selinux = NULL,
     *s_sys = NULL, *s_specfile = NULL, *s_path = NULL;
@@ -99,8 +113,10 @@ do_selinux_relabel (const char *specfile, const char *path,
    */
   ADD_ARG (argv, i, "-e"); ADD_ARG (argv, i, s_dev);
   ADD_ARG (argv, i, "-e"); ADD_ARG (argv, i, s_proc);
-  ADD_ARG (argv, i, "-e"); ADD_ARG (argv, i, s_selinux);
   ADD_ARG (argv, i, "-e"); ADD_ARG (argv, i, s_sys);
+  if (dir_exists (s_selinux)) {
+    ADD_ARG (argv, i, "-e"); ADD_ARG (argv, i, s_selinux);
+  }
 
   /* You have to use the -m option (where available) otherwise
    * setfiles puts all the mountpoints on the excludes list for no
@@ -115,6 +131,17 @@ do_selinux_relabel (const char *specfile, const char *path,
    */
   if (setfiles_has_option (&flag_C, 'C'))
     ADD_ARG (argv, i, "-C");
+
+  /* If the appliance is being run with multiple vCPUs, running setfiles
+   * in multithreading mode might speeds up the process.  Option "-T" was
+   * introduced in SELinux userspace v3.4, and we need to check whether it's
+   * supported.  Passing "-T 0" creates as many threads as there're available
+   * vCPU cores.
+   * https://github.com/SELinuxProject/selinux/releases/tag/3.4
+   */
+  if (setfiles_has_option (&flag_T, 'T')) {
+    ADD_ARG (argv, i, "-T"); ADD_ARG (argv, i, "0");
+  }
 
   /* Relabelling in a chroot. */
   if (STRNEQ (sysroot, "/")) {

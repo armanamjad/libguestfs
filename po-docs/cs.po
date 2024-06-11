@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libguestfs 1.39.12\n"
-"Report-Msgid-Bugs-To: libguestfs@redhat.com\n"
+"Report-Msgid-Bugs-To: guestfs@lists.libguestfs.org\n"
 "POT-Creation-Date: 2020-07-06 15:46+0100\n"
 "PO-Revision-Date: 2017-09-11 04:54+0000\n"
 "Last-Translator: Zdenek <chmelarz@gmail.com>\n"
@@ -16000,7 +16000,7 @@ msgstr ""
 #: ../docs/guestfs-faq.pod:1297
 msgid ""
 "Large new features that you intend to contribute should be discussed on the "
-"mailing list first (L<https://www.redhat.com/mailman/listinfo/libguestfs>).  "
+"mailing list first (L<https://lists.libguestfs.org>).  "
 "This avoids disappointment and wasted work if we don't think the feature "
 "would fit into the libguestfs project."
 msgstr ""
@@ -38700,7 +38700,7 @@ msgstr ""
 
 #. type: textblock
 #: ../docs/guestfs-testing.pod:24
-msgid "L<https://www.redhat.com/mailman/listinfo/libguestfs>"
+msgid "L<https://lists.libguestfs.org>"
 msgstr ""
 
 #. type: =head1
