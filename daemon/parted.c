@@ -424,30 +424,6 @@ do_part_get_bootable (const char *device, int partnum)
   return strstr (boot, "boot") != NULL;
 }
 
-/* Test if sfdisk is recent enough to have --part-type, to be used instead
- * of --print-id and --change-id.
- */
-static int
-test_sfdisk_has_part_type (void)
-{
-  static int tested = -1;
-
-  if (tested != -1)
-    return tested;
-
-  int r;
-  CLEANUP_FREE char *out = NULL, *err = NULL;
-
-  r = command (&out, &err, "sfdisk", "--help", NULL);
-  if (r == -1) {
-    reply_with_error ("%s: %s", "sfdisk --help", err);
-    return -1;
-  }
-
-  tested = strstr (out, "--part-type") != NULL;
-  return tested;
-}
-
 int
 do_part_set_mbr_id (const char *device, int partnum, int idbyte)
 {
@@ -455,8 +431,6 @@ do_part_set_mbr_id (const char *device, int partnum, int idbyte)
     reply_with_error ("partition number must be >= 1");
     return -1;
   }
-
-  const char *param = test_sfdisk_has_part_type () ? "--part-type" : "--change-id";
 
   char partnum_str[16];
   snprintf (partnum_str, sizeof partnum_str, "%d", partnum);
@@ -470,72 +444,14 @@ do_part_set_mbr_id (const char *device, int partnum, int idbyte)
 
   udev_settle ();
 
-  r = command (NULL, &err, "sfdisk",
-               param, device, partnum_str, idbyte_str, NULL);
+  r = command (NULL, &err, "sfdisk", "--part-type",
+               device, partnum_str, idbyte_str, NULL);
   if (r == -1) {
-    reply_with_error ("sfdisk %s: %s", param, err);
+    reply_with_error ("sfdisk --part-type: %s", err);
     return -1;
   }
 
   udev_settle ();
-
-  return 0;
-}
-
-int
-optgroup_gdisk_available (void)
-{
-  return prog_exists ("sgdisk");
-}
-
-int
-do_part_set_gpt_type (const char *device, int partnum, const char *guid)
-{
-  if (partnum <= 0) {
-    reply_with_error ("partition number must be >= 1");
-    return -1;
-  }
-
-  CLEANUP_FREE char *typecode = NULL;
-  if (asprintf (&typecode, "%i:%s", partnum, guid) == -1) {
-    reply_with_perror ("asprintf");
-    return -1;
-  }
-
-  CLEANUP_FREE char *err = NULL;
-  int r = commandf (NULL, &err, COMMAND_FLAG_FOLD_STDOUT_ON_STDERR,
-                    "sgdisk", device, "-t", typecode, NULL);
-
-  if (r == -1) {
-    reply_with_error ("%s %s -t %s: %s", "sgdisk", device, typecode, err);
-    return -1;
-  }
-
-  return 0;
-}
-
-int
-do_part_set_gpt_guid (const char *device, int partnum, const char *guid)
-{
-  if (partnum <= 0) {
-    reply_with_error ("partition number must be >= 1");
-    return -1;
-  }
-
-  CLEANUP_FREE char *typecode = NULL;
-  if (asprintf (&typecode, "%i:%s", partnum, guid) == -1) {
-    reply_with_perror ("asprintf");
-    return -1;
-  }
-
-  CLEANUP_FREE char *err = NULL;
-  int r = commandf (NULL, &err, COMMAND_FLAG_FOLD_STDOUT_ON_STDERR,
-                    "sgdisk", device, "-u", typecode, NULL);
-
-  if (r == -1) {
-    reply_with_error ("%s %s -u %s: %s", "sgdisk", device, typecode, err);
-    return -1;
-  }
 
   return 0;
 }
@@ -595,112 +511,4 @@ do_part_get_name (const char *device, int partnum)
     reply_with_error ("part-get-name can only be used on GUID Partition Tables");
     return NULL;
   }
-}
-
-static char *
-extract_uuid (const char *value)
-{
-  /* The value contains only valid GUID characters */
-  const size_t value_len = strspn (value, "-0123456789ABCDEF");
-
-  char *ret = malloc (value_len + 1);
-  if (ret == NULL) {
-    reply_with_perror ("malloc");
-    return NULL;
-  }
-
-  memcpy (ret, value, value_len);
-  ret[value_len] = '\0';
-  return ret;
-}
-
-char *
-do_part_get_disk_guid (const char *device)
-{
-  const char *pattern = "Disk identifier (GUID):";
-  size_t i;
-
-  CLEANUP_FREE char *err = NULL;
-  int r = commandf (NULL, &err, COMMAND_FLAG_FOLD_STDOUT_ON_STDERR,
-                    "sgdisk", device, "-p", NULL);
-  if (r == -1) {
-    reply_with_error ("%s %s -p: %s", "sgdisk", device, err);
-    return NULL;
-  }
-
-  CLEANUP_FREE_STRING_LIST char **lines = split_lines (err);
-  if (lines == NULL) {
-    reply_with_error ("'%s %s -p' returned no output",
-                      "sgdisk", device);
-    return NULL;
-  }
-
-  for (i = 0; lines[i] != NULL; ++i) {
-    if (STRPREFIX (lines[i], pattern)) {
-      char *value = lines[i] + strlen (pattern);
-
-      /* Skip any leading whitespace */
-      value += strspn (value, " \t");
-
-      /* Extract the actual information from the field. */
-      char *ret = extract_uuid (value);
-      if (ret == NULL) {
-        /* The extraction function already sends the error. */
-        return NULL;
-      }
-
-      return ret;
-    }
-  }
-
-  /* If we got here it means we didn't find the field */
-  reply_with_error ("sgdisk output did not contain disk GUID. "
-                    "See LIBGUESTFS_DEBUG output for more details");
-  return NULL;
-}
-
-int
-do_part_set_disk_guid (const char *device, const char *guid)
-{
-  CLEANUP_FREE char *err = NULL;
-  int r = commandf (NULL, &err, COMMAND_FLAG_FOLD_STDOUT_ON_STDERR,
-                    "sgdisk", device, "-U", guid, NULL);
-
-  if (r == -1) {
-    reply_with_error ("%s %s -U %s: %s", "sgdisk", device, guid, err);
-    return -1;
-  }
-
-  return 0;
-}
-
-int
-do_part_set_disk_guid_random (const char *device)
-{
-  CLEANUP_FREE char *err = NULL;
-  int r = commandf (NULL, &err, COMMAND_FLAG_FOLD_STDOUT_ON_STDERR,
-                    "sgdisk", device, "-U", "R", NULL);
-
-  if (r == -1) {
-    reply_with_error ("%s %s -U R: %s", "sgdisk", device, err);
-    return -1;
-  }
-
-  return 0;
-}
-
-int
-do_part_expand_gpt(const char *device)
-{
-  CLEANUP_FREE char *err = NULL;
-
-  int r = commandf (NULL, &err, COMMAND_FLAG_FOLD_STDOUT_ON_STDERR,
-                    "sgdisk", "-e", device, NULL);
-
-  if (r == -1) {
-    reply_with_error ("%s -e %s: %s", "sgdisk", device, err);
-    return -1;
-  }
-
-  return 0;
 }

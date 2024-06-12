@@ -18,9 +18,10 @@
 # Test that we don't break the old ::create module function while
 # fixing https://bugzilla.redhat.com/show_bug.cgi?id=1046509
 
-require File::join(File::dirname(__FILE__), 'test_helper')
+require 'minitest/autorun'
+require 'guestfs'
 
-class Test820RHBZ1046509 < MiniTest::Unit::TestCase
+class Test820RHBZ1046509 < Minitest::Test
   def _handleok(g)
     g.add_drive("/dev/null")
     g.close()

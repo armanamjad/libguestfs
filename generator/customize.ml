@@ -41,6 +41,7 @@ and op_type =
 | Unit                                  (* no argument *)
 | String of string                      (* string *)
 | StringPair of string                  (* string:string *)
+| StringTriplet of string               (* string:string:string *)
 | StringList of string                  (* string,string,... *)
 | TargetLinks of string                 (* target:link[:link...] *)
 | PasswordSelector of string            (* password selector *)
@@ -93,6 +94,34 @@ Change the permissions of C<FILE> to C<PERMISSIONS>.
 
 I<Note>: C<PERMISSIONS> by default would be decimal, unless you prefix
 it with C<0> to get octal, ie. use C<0700> not C<700>.";
+  };
+
+  { op_name = "chown";
+    op_type = StringTriplet "UID:GID:PATH";
+    op_discrim = "`Chown";
+    op_shortdesc = "Change the owner user and group ID of a file or directory";
+    op_pod_longdesc = "\
+Change the owner user and group ID of a file or directory in the guest.
+Note:
+
+=over 4
+
+=item *
+
+Only numeric UIDs and GIDs will work, and these may not be the same
+inside the guest as on the host.
+
+=item *
+
+This will not work with Windows guests.
+
+=back
+
+For example:
+
+ virt-customize --chown '0:0:/var/log/audit.log'
+
+See also: I<--upload>.";
   };
 
   { op_name = "commands-from-file";
@@ -235,6 +264,78 @@ L<virt-builder(1)/INSTALLING PACKAGES>.";
     op_pod_longdesc = "\
 Set the hostname of the guest to C<HOSTNAME>.  You can use a
 dotted hostname.domainname (FQDN) if you want.";
+  };
+
+  { op_name = "inject-blnsvr";
+    op_type = String "METHOD";
+    op_discrim = "`InjectBalloonServer";
+    op_shortdesc = "Inject the Balloon Server into a Windows guest";
+    op_pod_longdesc = "\
+Inject the Balloon Server (F<blnsvr.exe>) into a Windows guest.
+This operation also injects a firstboot script so that the Balloon
+Server is installed when the guest boots.
+
+The parameter is the same as used by the I<--inject-virtio-win> operation.
+
+Note that to do a full conversion of a Windows guest from a
+foreign hypervisor like VMware (which involves many other operations)
+you should use the L<virt-v2v(1)> tool instead of this.";
+  };
+
+  { op_name = "inject-qemu-ga";
+    op_type = String "METHOD";
+    op_discrim = "`InjectQemuGA";
+    op_shortdesc = "Inject the QEMU Guest Agent into a Windows guest";
+    op_pod_longdesc = "\
+Inject the QEMU Guest Agent into a Windows guest.  The guest
+agent communicates with qemu through a socket in order to
+provide enhanced features (see L<qemu-ga(8)>).  This operation
+also injects a firstboot script so that the Guest Agent is
+installed when the guest boots.
+
+The parameter is the same as used by the I<--inject-virtio-win> operation.
+
+Note that to do a full conversion of a Windows guest from a
+foreign hypervisor like VMware (which involves many other operations)
+you should use the L<virt-v2v(1)> tool instead of this.";
+  };
+
+  { op_name = "inject-virtio-win";
+    op_type = String "METHOD";
+    op_discrim = "`InjectVirtioWin";
+    op_shortdesc = "Inject virtio-win drivers into a Windows guest";
+    op_pod_longdesc = "\
+Inject virtio-win drivers into a Windows guest.  These drivers
+add virtio accelerated drivers suitable when running on top of
+a hypervisor that supports virtio (such as qemu/KVM).  The
+operation also adjusts the Windows Registry so that the drivers
+are installed when the guest boots.
+
+The parameter can be one of:
+
+=over 4
+
+=item ISO
+
+The path to the ISO image containing the virtio-win drivers
+(eg. F</usr/share/virtio-win/virtio-win.iso>).
+
+=item DIR
+
+The directory containing the unpacked virtio-win drivers
+(eg. F</usr/share/virtio-win>).
+
+=item B<\"osinfo\">
+
+The literal string C<\"osinfo\"> means to use the
+libosinfo database to locate the drivers.  (See
+L<osinfo-query(1)>.
+
+=back
+
+Note that to do a full conversion of a Windows guest from a
+foreign hypervisor like VMware (which involves many other operations)
+you should use the L<virt-v2v(1)> tool instead of this.";
   };
 
   { op_name = "install";
@@ -425,21 +526,16 @@ You can have multiple I<--ssh-inject> options, for different users
 and also for more keys for each user."
   };
 
-  { op_name = "truncate";
-    op_type = String "FILE";
-    op_discrim = "`Truncate";
-    op_shortdesc = "Truncate a file to zero size";
+  { op_name = "tar-in";
+    op_type = StringPair "TARFILE:REMOTEDIR";
+    op_discrim = "`TarIn";
+    op_shortdesc = "Copy local files or directories from a tarball into image";
     op_pod_longdesc = "\
-This command truncates C<FILE> to a zero-length file. The file must exist
-already.";
-  };
-
-  { op_name = "truncate-recursive";
-    op_type = String "PATH";
-    op_discrim = "`TruncateRecursive";
-    op_shortdesc = "Recursively truncate all files in directory";
-    op_pod_longdesc = "\
-This command recursively truncates all files under C<PATH> to zero-length.";
+Copy local files or directories from a local tar file
+called C<TARFILE> into the disk image, placing them in the
+directory C<REMOTEDIR> (which must exist).  Note that
+the tar file must be uncompressed (F<.tar.gz> files will not work
+here)";
   };
 
   { op_name = "timezone";
@@ -457,6 +553,23 @@ string like C<Europe/London>";
     op_shortdesc = "Run touch on a file";
     op_pod_longdesc = "\
 This command performs a L<touch(1)>-like operation on C<FILE>.";
+  };
+
+  { op_name = "truncate";
+    op_type = String "FILE";
+    op_discrim = "`Truncate";
+    op_shortdesc = "Truncate a file to zero size";
+    op_pod_longdesc = "\
+This command truncates C<FILE> to a zero-length file. The file must exist
+already.";
+  };
+
+  { op_name = "truncate-recursive";
+    op_type = String "PATH";
+    op_discrim = "`TruncateRecursive";
+    op_shortdesc = "Recursively truncate all files in directory";
+    op_pod_longdesc = "\
+This command recursively truncates all files under C<PATH> to zero-length.";
   };
 
   { op_name = "uninstall";
@@ -564,18 +677,28 @@ to modify C</etc/sysconfig/authconfig> (Fedora, RHEL) or
 C</etc/pam.d/common-password> (Debian, Ubuntu).";
   };
 
-  { flag_name = "selinux-relabel";
+  { flag_name = "no-selinux-relabel";
     flag_type = FlagBool false (* XXX - the default in virt-builder *);
-    flag_ml_var = "selinux_relabel";
-    flag_shortdesc = "Relabel files with correct SELinux labels";
+    flag_ml_var = "no_selinux_relabel";
+    flag_shortdesc = "Do not relabel files with correct SELinux labels";
     flag_pod_longdesc = "\
-Relabel files in the guest so that they have the correct SELinux label.
+Do not attempt to correct the SELinux labels of files in the guest.
 
-This will attempt to relabel files immediately, but if the operation fails
-this will instead touch F</.autorelabel> on the image to schedule a
-relabel operation for the next time the image boots.
+In such guests that support SELinux, customization automatically
+relabels files so that they have the correct SELinux label.  (The
+relabeling is performed immediately, but if the operation fails,
+customization will instead touch F</.autorelabel> on the image to
+schedule a relabel operation for the next time the image boots.)  This
+option disables the automatic relabeling.
 
-This option is a no-op for guests that do not support SELinux.";
+The option is a no-op for guests that do not support SELinux.";
+  };
+
+  { flag_name = "selinux-relabel";
+    flag_type = FlagBool false;
+    flag_ml_var = "selinux_relabel_ignored";
+    flag_shortdesc = "Compatibility option doing nothing";
+    flag_pod_longdesc = "This is a compatibility option that does nothing.";
   };
 
   { flag_name = "sm-credentials";
@@ -667,8 +790,13 @@ let rec argspec () =
           option_name in
     let len = String.length arg in
     String.sub arg 0 i, String.sub arg (i+1) (len-(i+1))
-  in
-  let split_string_list arg =
+  and split_string_triplet option_name arg =
+    match String.nsplit ~max:3 \":\" arg with
+    | [a; b; c] -> a, b, c
+    | _ ->
+        error (f_\"invalid format for '--%%s' parameter, see the man page\")
+          option_name
+  and split_string_list arg =
     String.nsplit \",\" arg
   in
   let split_links_list option_name arg =
@@ -708,6 +836,19 @@ let rec argspec () =
       pr "        s_\"%s\",\n" v;
       pr "        fun s ->\n";
       pr "          let p = split_string_pair \"%s\" s in\n" name;
+      pr "          List.push_front (%s p) ops\n" discrim;
+      pr "      ),\n";
+      pr "      s_\"%s\"\n" shortdesc;
+      pr "    ),\n";
+      pr "    Some %S, %S;\n" v longdesc
+    | { op_type = StringTriplet v; op_name = name; op_discrim = discrim;
+        op_shortdesc = shortdesc; op_pod_longdesc = longdesc } ->
+      pr "    (\n";
+      pr "      [ L\"%s\" ],\n" name;
+      pr "      Getopt.String (\n";
+      pr "        s_\"%s\",\n" v;
+      pr "        fun s ->\n";
+      pr "          let p = split_string_triplet \"%s\" s in\n" name;
       pr "          List.push_front (%s p) ops\n" discrim;
       pr "      ),\n";
       pr "      s_\"%s\"\n" shortdesc;
@@ -862,6 +1003,7 @@ let rec argspec () =
     | { op_type = Unit; }
     | { op_type = String _; }
     | { op_type = StringPair _; }
+    | { op_type = StringTriplet _; }
     | { op_type = StringList _; }
     | { op_type = TargetLinks _; }
     | { op_type = PasswordSelector _; }
@@ -927,6 +1069,10 @@ type ops = {
     | { op_type = StringPair v; op_discrim = discrim;
         op_name = name } ->
       pr "  | %s of string * string\n      (* --%s %s *)\n" discrim name v
+    | { op_type = StringTriplet v; op_discrim = discrim;
+        op_name = name } ->
+      pr "  | %s of string * string * string\n      (* --%s %s *)\n"
+        discrim name v
     | { op_type = StringList v; op_discrim = discrim;
         op_name = name } ->
       pr "  | %s of string list\n      (* --%s %s *)\n" discrim name v
@@ -979,9 +1125,9 @@ let generate_customize_synopsis_pod () =
       function
       | { op_type = Unit; op_name = n } ->
         n, sprintf "[--%s]" n
-      | { op_type = String v | StringPair v | StringList v | TargetLinks v
-            | PasswordSelector v | UserPasswordSelector v | SSHKeySelector v
-            | StringFn (v, _) | SMPoolSelector v;
+      | { op_type = String v | StringPair v | StringTriplet v | StringList v
+            | TargetLinks v | PasswordSelector v | UserPasswordSelector v
+            | SSHKeySelector v | StringFn (v, _) | SMPoolSelector v;
           op_name = n } ->
         n, sprintf "[--%s %s]" n v
     ) ops @
@@ -1022,9 +1168,9 @@ let generate_customize_options_pod () =
       function
       | { op_type = Unit; op_name = n; op_pod_longdesc = ld } ->
         n, sprintf "B<--%s>" n, ld
-      | { op_type = String v | StringPair v | StringList v | TargetLinks v
-            | PasswordSelector v | UserPasswordSelector v | SSHKeySelector v
-            | StringFn (v, _) | SMPoolSelector v;
+      | { op_type = String v | StringPair v | StringTriplet v | StringList v
+            | TargetLinks v | PasswordSelector v | UserPasswordSelector v
+            | SSHKeySelector v | StringFn (v, _) | SMPoolSelector v;
           op_name = n; op_pod_longdesc = ld } ->
         n, sprintf "B<--%s> %s" n v, ld
     ) ops @

@@ -59,6 +59,7 @@ generator_built = \
 	parted.mli \
 	realpath.mli \
 	rpm.mli \
+	sfdisk.mli \
 	statvfs.mli \
 	structs.ml \
 	structs.mli
@@ -129,6 +130,7 @@ guestfsd_SOURCES = \
 	fs-min-size.c \
 	fsck.c \
 	fstrim.c \
+	gdisk.c \
 	glob.c \
 	grep.c \
 	grub.c \
@@ -279,6 +281,7 @@ SOURCES_MLI = \
 	devsparts.mli \
 	file.mli \
 	filearch.mli \
+	file_helper.mli \
 	findfs.mli \
 	inspect.mli \
 	inspect_fs.mli \
@@ -303,6 +306,7 @@ SOURCES_MLI = \
 	parted.mli \
 	realpath.mli \
 	rpm.mli \
+	sfdisk.mli \
 	statvfs.mli \
 	structs.mli \
 	sysroot.mli \
@@ -320,6 +324,7 @@ SOURCES_ML = \
 	btrfs.ml \
 	cryptsetup.ml \
 	devsparts.ml \
+	file_helper.ml \
 	file.ml \
 	filearch.ml \
 	isoinfo.ml \
@@ -333,6 +338,7 @@ SOURCES_ML = \
 	md.ml \
 	mount.ml \
 	mount_utils.ml \
+	sfdisk.ml \
 	parted.ml \
 	listfs.ml \
 	realpath.ml \
@@ -374,9 +380,11 @@ OCAML_LIBS = \
 	-lmlstdutils \
 	-lmlaugeas \
 	-lmlhivex \
-	-lcamlstr \
-	-lunix \
-	-l$(CAMLRUN) -ldl -lm
+	-l$(CAMLSTR) \
+	-l$(CAMLUNIX) \
+	-l$(CAMLRUN) \
+	$(LIBZSTD_LIBS) \
+	-ldl -lm
 
 CLEANFILES += camldaemon.o
 

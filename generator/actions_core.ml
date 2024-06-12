@@ -2570,6 +2570,13 @@ parameter which must have one of the following values:
 Compute the cyclic redundancy check (CRC) specified by POSIX
 for the C<cksum> command.
 
+=item C<gost>
+
+=item C<gost12>
+
+Compute the checksum using GOST R34.11-94 or
+GOST R34.11-2012 message digest.
+
 =item C<md5>
 
 Compute the MD5 hash (using the L<md5sum(1)> program).
@@ -5280,7 +5287,7 @@ See also C<guestfs_part_set_bootable>." };
   { defaults with
     name = "part_get_mbr_id"; added = (1, 3, 2);
     style = RInt "idbyte", [String (Device, "device"); Int "partnum"], [];
-    impl = OCaml "Parted.part_get_mbr_id";
+    impl = OCaml "Sfdisk.part_get_mbr_id";
     fish_output = Some FishOutputHexadecimal;
     tests = [
       InitEmpty, Always, TestResult (
@@ -7157,8 +7164,7 @@ See C<guestfs_get_e2generation>." };
          ["btrfs_subvolume_create"; "/test1"; "NOARG"];
          ["btrfs_subvolume_create"; "/test2"; "NOARG"];
          ["btrfs_subvolume_create"; "/dir/test3"; "NOARG"];
-         ["btrfs_subvolume_snapshot"; "/dir/test3"; "/dir/test5"; "true"; "NOARG"];
-         ["btrfs_subvolume_snapshot"; "/dir/test3"; "/dir/test6"; ""; "0/1000"]]), []
+         ["btrfs_subvolume_snapshot"; "/dir/test3"; "/dir/test5"; "true"; "NOARG"]]), []
     ];
     shortdesc = "create a btrfs snapshot";
     longdesc = "\
@@ -8107,7 +8113,7 @@ group with GUID C<diskgroup>." };
   { defaults with
     name = "part_set_gpt_type"; added = (1, 21, 1);
     style = RErr, [String (Device, "device"); Int "partnum"; String (GUID, "guid")], [];
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_set_gpt_type";
     tests = [
       InitGPT, Always, TestLastFail (
         [["part_set_gpt_type"; "/dev/sda"; "1"; "f"]]), [];
@@ -8129,8 +8135,7 @@ for a useful list of type GUIDs." };
   { defaults with
     name = "part_get_gpt_type"; added = (1, 21, 1);
     style = RString (RPlainString, "guid"), [String (Device, "device"); Int "partnum"], [];
-    impl = OCaml "Parted.part_get_gpt_type";
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_get_gpt_type";
     tests = [
       InitGPT, Always, TestResultString (
         [["part_set_gpt_type"; "/dev/sda"; "1";
@@ -8140,15 +8145,12 @@ for a useful list of type GUIDs." };
     ];
     shortdesc = "get the type GUID of a GPT partition";
     longdesc = "\
-Return the type GUID of numbered GPT partition C<partnum>. For MBR partitions,
-return an appropriate GUID corresponding to the MBR type. Behaviour is undefined
-for other partition types." };
+Return the type GUID of numbered GPT partition C<partnum>." };
 
   { defaults with
     name = "part_set_gpt_attributes"; added = (1, 21, 1);
     style = RErr, [String (Device, "device"); Int "partnum"; Int64 "attributes"], [];
-    impl = OCaml "Parted.part_set_gpt_attributes";
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_set_gpt_attributes";
     tests = [
       InitGPT, Always, TestResult (
         [["part_set_gpt_attributes"; "/dev/sda"; "1";
@@ -8167,8 +8169,7 @@ for a useful list of partition attributes." };
   { defaults with
     name = "part_get_gpt_attributes"; added = (1, 21, 1);
     style = RInt64 "attributes", [String (Device, "device"); Int "partnum"], [];
-    impl = OCaml "Parted.part_get_gpt_attributes";
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_get_gpt_attributes";
     tests = [
       InitGPT, Always, TestResult (
         [["part_set_gpt_attributes"; "/dev/sda"; "1";
@@ -8782,7 +8783,7 @@ Limit the size of the subvolume with path C<subvolume>." };
          ["mount"; "/dev/sda1"; "/"];
          ["btrfs_quota_enable"; "/"; "true"];
          ["btrfs_subvolume_create"; "/sub1"; "NOARG"];
-         ["btrfs_qgroup_create"; "0/1000"; "/sub1"]]), [];
+         ["btrfs_qgroup_create"; "1/1000"; "/sub1"]]), [];
     ];
     shortdesc = "create a subvolume quota group";
     longdesc = "\
@@ -8798,8 +8799,8 @@ Create a quota group (qgroup) for subvolume at C<subvolume>." };
          ["mount"; "/dev/sda1"; "/"];
          ["btrfs_quota_enable"; "/"; "true"];
          ["btrfs_subvolume_create"; "/sub1"; "NOARG"];
-         ["btrfs_qgroup_create"; "0/1000"; "/sub1"];
-         ["btrfs_qgroup_destroy"; "0/1000"; "/sub1"]]), [];
+         ["btrfs_qgroup_create"; "1/1000"; "/sub1"];
+         ["btrfs_qgroup_destroy"; "1/1000"; "/sub1"]]), [];
     ];
     shortdesc = "destroy a subvolume quota group";
     longdesc = "\
@@ -8814,7 +8815,7 @@ Destroy a quota group." };
          ["mount"; "/dev/sda1"; "/"];
          ["btrfs_quota_enable"; "/"; "true"];
          ["btrfs_subvolume_create"; "/sub1"; "NOARG"];
-         ["btrfs_qgroup_create"; "0/1000"; "/sub1"];
+         ["btrfs_qgroup_create"; "1/1000"; "/sub1"];
          ["btrfs_qgroup_show"; "/"]]), [];
     ];
     optional = Some "btrfs"; camel_name = "BTRFSQgroupShow";
@@ -8832,9 +8833,9 @@ usages." };
         [["mkfs_btrfs"; "/dev/sda1"; ""; ""; "NOARG"; ""; "NOARG"; "NOARG"; ""; ""];
          ["mount"; "/dev/sda1"; "/"];
          ["btrfs_quota_enable"; "/"; "true"];
-         ["btrfs_qgroup_create"; "0/1000"; "/"];
          ["btrfs_qgroup_create"; "1/1000"; "/"];
-         ["btrfs_qgroup_assign"; "0/1000"; "1/1000"; "/"]]), [];
+         ["btrfs_qgroup_create"; "2/1000"; "/"];
+         ["btrfs_qgroup_assign"; "1/1000"; "2/1000"; "/"]]), [];
     ];
     shortdesc = "add a qgroup to a parent qgroup";
     longdesc = "\
@@ -8850,10 +8851,10 @@ several qgroups into a parent qgroup to share common limit." };
         [["mkfs_btrfs"; "/dev/sda1"; ""; ""; "NOARG"; ""; "NOARG"; "NOARG"; ""; ""];
          ["mount"; "/dev/sda1"; "/"];
          ["btrfs_quota_enable"; "/"; "true"];
-         ["btrfs_qgroup_create"; "0/1000"; "/"];
          ["btrfs_qgroup_create"; "1/1000"; "/"];
-         ["btrfs_qgroup_assign"; "0/1000"; "1/1000"; "/"];
-         ["btrfs_qgroup_remove"; "0/1000"; "1/1000"; "/"]]), [];
+         ["btrfs_qgroup_create"; "2/1000"; "/"];
+         ["btrfs_qgroup_assign"; "1/1000"; "2/1000"; "/"];
+         ["btrfs_qgroup_remove"; "1/1000"; "2/1000"; "/"]]), [];
     ];
     shortdesc = "remove a qgroup from its parent qgroup";
     longdesc = "\
@@ -8968,7 +8969,7 @@ Recover bad superblocks from good copies." };
   { defaults with
     name = "part_set_gpt_guid"; added = (1, 29, 25);
     style = RErr, [String (Device, "device"); Int "partnum"; String (GUID, "guid")], [];
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_set_gpt_guid";
     tests = [
       InitGPT, Always, TestLastFail (
         [["part_set_gpt_guid"; "/dev/sda"; "1"; "f"]]), [];
@@ -8987,8 +8988,7 @@ valid GUID." };
   { defaults with
     name = "part_get_gpt_guid"; added = (1, 29, 25);
     style = RString (RPlainString, "guid"), [String (Device, "device"); Int "partnum"], [];
-    impl = OCaml "Parted.part_get_gpt_guid";
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_get_gpt_guid";
     tests = [
       InitGPT, Always, TestResultString (
         [["part_set_gpt_guid"; "/dev/sda"; "1";
@@ -9187,7 +9187,7 @@ This is the internal call which implements C<guestfs_feature_available>." };
   { defaults with
     name = "part_set_disk_guid"; added = (1, 33, 2);
     style = RErr, [String (Device, "device"); String (GUID, "guid")], [];
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_set_disk_guid";
     tests = [
       InitGPT, Always, TestLastFail (
         [["part_set_disk_guid"; "/dev/sda"; "f"]]), [];
@@ -9206,7 +9206,7 @@ or if C<guid> is not a valid GUID." };
   { defaults with
     name = "part_get_disk_guid"; added = (1, 33, 2);
     style = RString (RPlainString, "guid"), [String (Device, "device")], [];
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_get_disk_guid";
     tests = [
       InitGPT, Always, TestResultString (
         [["part_set_disk_guid"; "/dev/sda";
@@ -9222,7 +9222,7 @@ Behaviour is undefined for other partition types." };
   { defaults with
     name = "part_set_disk_guid_random"; added = (1, 33, 2);
     style = RErr, [String (Device, "device")], [];
-    optional = Some "gdisk";
+    impl = OCaml "Sfdisk.part_set_disk_guid_random";
     tests = [
       InitGPT, Always, TestRun (
         [["part_set_disk_guid_random"; "/dev/sda"]]), [];
@@ -9355,6 +9355,8 @@ with large files, such as the resulting squashfs will be over 3GB big." };
       InitISOFS, Always, TestResultString (
         [["file_architecture"; "/bin-riscv64-dynamic"]], "riscv64"), [];
       InitISOFS, Always, TestResultString (
+        [["file_architecture"; "/bin-loongarch64-dynamic"]], "loongarch64"), [];
+      InitISOFS, Always, TestResultString (
         [["file_architecture"; "/bin-s390x-dynamic"]], "s390x"), [];
       InitISOFS, Always, TestResultString (
         [["file_architecture"; "/bin-sparc-dynamic"]], "sparc"), [];
@@ -9376,6 +9378,8 @@ with large files, such as the resulting squashfs will be over 3GB big." };
         [["file_architecture"; "/lib-ppc64le.so"]], "ppc64le"), [];
       InitISOFS, Always, TestResultString (
         [["file_architecture"; "/lib-riscv64.so"]], "riscv64"), [];
+      InitISOFS, Always, TestResultString (
+        [["file_architecture"; "/lib-loongarch64.so"]], "loongarch64"), [];
       InitISOFS, Always, TestResultString (
         [["file_architecture"; "/lib-s390x.so"]], "s390x"), [];
       InitISOFS, Always, TestResultString (
@@ -9434,6 +9438,10 @@ Intel Itanium.
 =item \"ppc64le\"
 
 64 bit Power PC (little endian).
+
+=item \"loongarch64\"
+
+64 bit LoongArch64 (little endian).
 
 =item \"riscv32\"
 

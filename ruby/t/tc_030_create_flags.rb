@@ -15,9 +15,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-require File::join(File::dirname(__FILE__), 'test_helper')
+require 'minitest/autorun'
+require 'guestfs'
 
-class Test030CreateFlags < MiniTest::Unit::TestCase
+class Test030CreateFlags < Minitest::Test
   def test_030_create_flags
     g = Guestfs::Guestfs.new(:environment => false, :close_on_exit => true)
     refute_nil (g)

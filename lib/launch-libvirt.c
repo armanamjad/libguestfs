@@ -38,6 +38,7 @@
 #include <libvirt/virterror.h>
 #endif
 
+#include <libxml/parser.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 
@@ -639,12 +640,8 @@ launch_libvirt (guestfs_h *g, void *datav, const char *libvirt_uri)
   dom = virDomainCreateXML (conn, (char *) xml, VIR_DOMAIN_START_AUTODESTROY);
   if (!dom) {
     libvirt_error (g, _(
-                        "could not create appliance through libvirt.\n"
-                        "\n"
-                        "Try running qemu directly without libvirt using this environment variable:\n"
-                        "export LIBGUESTFS_BACKEND=direct\n"
-                        "\n"
-                        "Original error from libvirt"));
+                        "could not create appliance through libvirt. "
+			"Original error from libvirt"));
     goto cleanup;
   }
 
@@ -1431,6 +1428,17 @@ construct_libvirt_xml_devices (guestfs_h *g,
         guestfs_int_version_ge (&params->data->libvirt_version, 3, 8, 0)) {
       start_element ("interface") {
         attribute ("type", "user");
+        /* If libvirt is 9.0.0+ and "passt" is available, ask for passt rather
+         * than SLIRP (RHBZ#2184967).  Note that this causes some
+         * appliance-visible changes (although network connectivity is certainly
+         * functional); refer to RHBZ#2222766 about those.
+         */
+        if (guestfs_int_version_ge (&params->data->libvirt_version, 9, 0, 0) &&
+            guestfs_int_passt_runnable (g)) {
+          start_element ("backend") {
+            attribute ("type", "passt");
+          } end_element ();
+        }
         start_element ("model") {
           attribute ("type", "virtio");
         } end_element ();

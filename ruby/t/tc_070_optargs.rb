@@ -15,9 +15,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-require File::join(File::dirname(__FILE__), 'test_helper')
+require 'minitest/autorun'
+require 'guestfs'
 
-class Test070Optargs < MiniTest::Unit::TestCase
+class Test070Optargs < Minitest::Test
   def test_070_optargs
     g = Guestfs::Guestfs.new()
 

@@ -187,8 +187,34 @@ cleanup_mutex_unlock (pthread_mutex_t **ptr)
 /* Network address and network mask (expressed as address prefix) that the
  * appliance will see (if networking is enabled).
  */
-#define NETWORK_ADDRESS "169.254.0.0"
+#define NETWORK_ADDRESS "169.254.2.15"
 #define NETWORK_PREFIX  "16"
+
+/* The IP address and the MAC address of the host, as seen from the appliance.
+ *
+ * NETWORK_GW_IP should be the same as NETWORK_ADDRESS, only replacing ".15" in
+ * the rightmost octet with ".2".  NETWORK_GW_MAC cannot be changed.  These
+ * restrictions are a consequence of the following landscape:
+ *
+ * libguestfs backend  userspace network stack  restrictions
+ * ------------------  -----------------------  --------------------------------
+ * direct              passt                    None; both NETWORK_GW_IP and
+ *                                              NETWORK_GW_MAC can be set on the
+ *                                              passt command line.
+ *
+ * direct              SLIRP                    SLIRP hard-codes NETWORK_GW_MAC.
+ *
+ * libvirt             passt                    The domain XML does not expose
+ *                                              either knob (RHBZ#2222766), even
+ *                                              though passt could accept both.
+ *
+ * libvirt             SLIRP                    The domain XML does not expose
+ *                                              either knob (RHBZ#2222766), and
+ *                                              SLIRP hard-codes NETWORK_GW_MAC
+ *                                              anyway.
+ */
+#define NETWORK_GW_IP   "169.254.2.2"
+#define NETWORK_GW_MAC  "52:56:00:00:00:02"
 
 /* Guestfs handle and associated structures. */
 
@@ -701,6 +727,8 @@ extern int guestfs_int_set_env_runtimedir (guestfs_h *g, const char *envname, co
 extern int guestfs_int_lazy_make_tmpdir (guestfs_h *g);
 extern int guestfs_int_lazy_make_sockdir (guestfs_h *g);
 extern char *guestfs_int_make_temp_path (guestfs_h *g, const char *name, const char *extension);
+extern int guestfs_int_create_socketname (guestfs_h *g, const char *filename, char (*sockname)[UNIX_PATH_MAX]);
+extern char *guestfs_int_make_pid_path (guestfs_h *g, const char *name);
 extern char *guestfs_int_lazy_make_supermin_appliance_dir (guestfs_h *g);
 extern void guestfs_int_remove_tmpdir (guestfs_h *g);
 extern void guestfs_int_remove_sockdir (guestfs_h *g);
@@ -733,9 +761,9 @@ extern int guestfs_int_get_uefi (guestfs_h *g, char *const *firmwares, const cha
 extern int64_t guestfs_int_timeval_diff (const struct timeval *x, const struct timeval *y);
 extern void guestfs_int_launch_send_progress (guestfs_h *g, int perdozen);
 extern void guestfs_int_unblock_sigterm (void);
-extern int guestfs_int_create_socketname (guestfs_h *g, const char *filename, char (*sockname)[UNIX_PATH_MAX]);
 extern void guestfs_int_register_backend (const char *name, const struct backend_ops *);
 extern int guestfs_int_set_backend (guestfs_h *g, const char *method);
+extern bool guestfs_int_passt_runnable (guestfs_h *g);
 
 /* Close all file descriptors matching the condition. */
 #define close_file_descriptors(cond) do {                               \
@@ -784,7 +812,6 @@ extern void guestfs_int_cmd_set_stdout_callback (struct command *, cmd_stdout_ca
 extern void guestfs_int_cmd_set_stderr_to_stdout (struct command *);
 extern void guestfs_int_cmd_set_child_rlimit (struct command *, int resource, long limit);
 extern void guestfs_int_cmd_clear_capture_errors (struct command *);
-extern void guestfs_int_cmd_clear_close_files (struct command *);
 extern void guestfs_int_cmd_set_child_callback (struct command *, cmd_child_callback child_callback, void *data);
 extern int guestfs_int_cmd_run (struct command *);
 extern void guestfs_int_cmd_close (struct command *);
