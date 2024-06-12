@@ -70,6 +70,7 @@ and distro =
   | DISTRO_ARCHLINUX
   | DISTRO_BUILDROOT
   | DISTRO_CENTOS
+  | DISTRO_CIRCLE
   | DISTRO_CIRROS
   | DISTRO_COREOS
   | DISTRO_DEBIAN
@@ -205,6 +206,7 @@ and string_of_distro = function
   | DISTRO_ARCHLINUX -> "archlinux"
   | DISTRO_BUILDROOT -> "buildroot"
   | DISTRO_CENTOS -> "centos"
+  | DISTRO_CIRCLE -> "circle"
   | DISTRO_CIRROS -> "cirros"
   | DISTRO_COREOS -> "coreos"
   | DISTRO_DEBIAN -> "debian"
